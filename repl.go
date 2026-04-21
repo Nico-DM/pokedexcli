@@ -9,6 +9,10 @@ import (
 
 func startRepl() {
 	reader := bufio.NewScanner(os.Stdin)
+	config := config{
+		Next:     "https://pokeapi.co/api/v2/location-area",
+		Previous: nil,
+	}
 	for {
 		fmt.Print("Pokedex > ")
 		reader.Scan()
@@ -22,7 +26,7 @@ func startRepl() {
 
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback()
+			err := command.callback(&config)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -43,7 +47,7 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -58,5 +62,20 @@ func getCommands() map[string]cliCommand {
 			description: "Displays a help message",
 			callback: commandHelp,
 		},
+		"map": {
+			name: "map",
+			description: "Displays the next page of 20 location areas",
+			callback: commandMap,
+		},
+		"mapb": {
+			name: "mapb",
+			description: "Displays the previous page of 20 location areas",
+			callback: commandMapb,
+		},
 	}
+}
+
+type config struct {
+	Next     string
+	Previous *string
 }
