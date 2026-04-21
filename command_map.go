@@ -1,28 +1,40 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/Nico-DM/pokedexcli/internal/pokeapi"
 )
 
-func commandMap(cfg *config) error {
-	res, err := api.Get(cfg.Next)
+func commandMapf(cfg *config) error {
+	locationsResp, err := cfg.pokeapiClient.ListLocations(cfg.nextLocationsURL)
 	if err != nil {
 		return err
 	}
 
-	locationAreas, err := api.Unmarshal[api.LocationAreaPage](res)
+	cfg.nextLocationsURL = locationsResp.Next
+	cfg.prevLocationsURL = locationsResp.Previous
+
+	for _, loc := range locationsResp.Results {
+		fmt.Println(loc.Name)
+	}
+	return nil
+}
+
+func commandMapb(cfg *config) error {
+	if cfg.prevLocationsURL == nil {
+		return errors.New("you're on the first page")
+	}
+
+	locationResp, err := cfg.pokeapiClient.ListLocations(cfg.prevLocationsURL)
 	if err != nil {
 		return err
 	}
 
-	for _, result := range locationAreas.Results {
-		fmt.Println(result.Name)
+	cfg.nextLocationsURL = locationResp.Next
+	cfg.prevLocationsURL = locationResp.Previous
+
+	for _, loc := range locationResp.Results {
+		fmt.Println(loc.Name)
 	}
-
-	cfg.Next = *locationAreas.Next
-	cfg.Previous = locationAreas.Previous
-
 	return nil
 }
